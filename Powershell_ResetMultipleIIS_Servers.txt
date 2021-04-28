@@ -1,0 +1,21 @@
+#Specify servers in an array variable
+[array]$servers = "server1.contoso.local",
+"server2.contoso.local",
+"server3.contoso.local",
+"server4.contoso.local",
+"server5.contoso.local",
+"server6.contoso.local",
+"server7.contoso.local",
+"server8.contoso.local",
+"server9.contoso.local",
+"server10.contoso.local",
+"#Step through each server in the array and perform an IISRESET
+#Also show IIS service status after the reset has completed
+foreach ($server in $servers)
+{
+    Write-Host "Restarting IIS on server $server..."
+    IISRESET $server /noforce
+    Write-Host "IIS status for server $server"
+    IISRESET $server /status
+}
+Write-Host IIS has been restarted on all servers

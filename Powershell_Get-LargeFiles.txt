@@ -1,0 +1,2 @@
+Get-ChildItem -Path G:\Folder -Recurse | Where-Object {$_.length/1MB -gt 100} |  select full
+name,LastAccessTime,@{ n="SpaceUsedMB"; e={[math]::round( $_.length/1MB, 2 )}}, @{name='owner';expression={(get-acl $_.FullName).owner}} | Export-Csv C:\Temp\files_gt_300mb.csv

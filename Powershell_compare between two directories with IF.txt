@@ -1,0 +1,54 @@
+﻿Clear-Host
+$ImageFiles = "C:\tmp2" 
+$ValidPath = Test-Path $ImageFiles -IsValid
+If ($ValidPath -eq $True) {
+$folder1 = "C:\tmp"
+$folder2 = "C:\tmpCopy"
+
+$folder1files = Get-ChildItem -Path $folder1
+$folder2files = Get-ChildItem -Path $folder2
+
+$FileDiffs = Compare-Object -ReferenceObject $folder1files -DifferenceObject $folder2files
+
+$FileDiffs | foreach {
+    $copyParams = @{
+               'Path' = $_.InputObject.FullName
+            }
+            if ($_.SideIndicator -eq '<=')
+            {
+                $copyParams.Destination = $folder2
+            }
+            else
+            {
+                $copyParams.Destination = $folder1
+            }
+            copy-item @copyParams
+}
+
+# PowerShell script to check a valid path
+}Else{
+Write-Host "OPCION2" 
+pause
+$folder1 = "C:\tmp"
+$folder2 = "C:\tmpCopy"
+
+$folder1files = Get-ChildItem -Path $folder1
+$folder2files = Get-ChildItem -Path $folder2
+
+$FileDiffs = Compare-Object -ReferenceObject $folder1files -DifferenceObject $folder2files
+
+$FileDiffs | foreach {
+    $copyParams = @{
+               'Path' = $_.InputObject.FullName
+            }
+            if ($_.SideIndicator -eq '<=')
+            {
+                $copyParams.Destination = $folder2
+            }
+            else
+            {
+                $copyParams.Destination = $folder1
+            }
+            copy-item @copyParams
+}
+}

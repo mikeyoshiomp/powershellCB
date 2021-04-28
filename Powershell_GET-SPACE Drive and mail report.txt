@@ -1,0 +1,56 @@
+foreach($server in $servers)
+{
+    $disks = Get-WmiObject -ComputerName $server -Class Win32_LogicalDisk -Filter "DriveType = 3"; #gets disk info from the list of servers
+    $Serverinfo = Get-WmiObject -class Win32_OperatingSystem -computername $server
+	$boottime = $Serverinfo.ConvertToDateTime($Serverinfo.LastBootUpTime)
+    [TimeSpan]$Utime = (New-TimeSpan -Start $boottime -End $now)
+	if ($asHtml)
+	{   $body += ("<p class=""paragraph"">Server: {0}</p>`n" -f $server );
+        $body += ("<p class=""paragraph"">Last Reboot: </p>" -f  " Days -> " + $Utime.Days + " Days " + $Utime.Hours + " Hours "  + " and " + $Utime.Minutes + " Minutes " );
+	 	$body += getHtmlTableHeader;
+	}
+	else
+	{	$body += ("Server: {0}`tDrives #: {1}`n" -f $server, $disks.Count);
+		$body += getTextTableHeader;
+	}
+
+	foreach ($disk in $disks)
+	{
+		[String] $message = [String]::Empty;
+		if (100.0 * $disk.FreeSpace / $disk.Size -le $levelAlarm)
+		{   $message = "Alarm !!!";   }
+		elseif (100.0 * $disk.FreeSpace / $disk.Size -le $levelWarn)
+		{   $message = "Warning /!\";   }
+		
+		[Object[]] $data = @($disk.DeviceID, `
+			                 $disk.VolumeName, `
+			                 [Math]::Round(($disk.Size / 1048576), 0), ` #1048576 to convert the data to mb
+							 [Math]::Round(($disk.FreeSpace / 1048576), 0), `
+							 [Math]::Round((100.0 * $disk.FreeSpace / $disk.Size), 1), ` # calculate the % of the disk
+							 $message)
+		if ($asHtml)
+		{	$body += getHtmlTableRow -rowData $data;    }
+		else
+		{	$body += getTextTableRow -rowData $data;	}
+		
+	    $body += "`n";
+	}
+	
+	if ($asHtml)
+	{   $body += "</table>`n";	}
+	else
+	{	$body += "`n";	}
+}
+
+if ($asHtml)
+{   $body += "</body>";	}
+
+# message construction and ending script
+$smtpClient = New-Object Net.Mail.SmtpClient($smtpServer);
+
+$emailFrom  = New-Object Net.Mail.MailAddress $sender, $sender;
+$emailTo    = New-Object Net.Mail.MailAddress $receiver , $receiver;
+$mailMsg    = New-Object Net.Mail.MailMessage($emailFrom, $emailTo, $subject, $body);
+
+$mailMsg.IsBodyHtml = $asHtml;
+$smtpClient.Send($mailMsg)
